@@ -30,6 +30,14 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       domainName,
     });
 
+    // ---- S3 Bucket for book content (markdown + images, synced from book repos) ----
+    const contentBucket = new s3.Bucket(this, 'BookContent', {
+      bucketName: `dotd-content-${stage}`,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      versioned: true,
+    });
+
     // ---- S3 Bucket for static assets ----
     const staticBucket = new s3.Bucket(this, 'StaticAssets', {
       bucketName: `dreams-of-the-deep-static-${stage}`,
@@ -179,6 +187,11 @@ function handler(event) {
     new cdk.CfnOutput(this, 'StaticBucketName', {
       value: staticBucket.bucketName,
       description: 'S3 bucket for static assets',
+    });
+
+    new cdk.CfnOutput(this, 'ContentBucketName', {
+      value: contentBucket.bucketName,
+      description: 'S3 bucket for book content',
     });
   }
 }

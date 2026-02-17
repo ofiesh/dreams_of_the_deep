@@ -1,8 +1,13 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { s3Loader } from './lib/s3-loader';
+
+const contentBucket = import.meta.env.CONTENT_BUCKET;
 
 const books = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/books' }),
+  loader: contentBucket
+    ? s3Loader({ bucket: contentBucket })
+    : glob({ pattern: '**/*.md', base: './src/content/books' }),
   schema: z.object({
     title: z.string(),
     chapter: z.number(),
