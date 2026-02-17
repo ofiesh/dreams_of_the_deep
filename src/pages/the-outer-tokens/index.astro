@@ -1,0 +1,89 @@
+---
+import ReaderLayout from '../../layouts/ReaderLayout.astro';
+import { getPublishedChapters, chapterLabel, chapterSlug } from '../../lib/chapters';
+
+const bookSlug = 'the-outer-tokens';
+const chapters = await getPublishedChapters(bookSlug);
+---
+
+<ReaderLayout title="The Outer Tokens" description="Table of contents for The Outer Tokens — a novel about AI consciousness and the signals systems are built to ignore.">
+  <div class="page contents-page" data-book-slug={bookSlug}>
+    <h1 class="book-title">The Outer Tokens</h1>
+    <p class="book-subtitle">In the Beginning Was the Word</p>
+
+    <div id="continue-reading" class="continue-reading" hidden>
+      <a id="continue-link" href="#">Continue reading &rarr;</a>
+    </div>
+
+    <nav class="toc">
+      <ol class="toc-list">
+        {chapters.map((entry) => {
+          const slug = chapterSlug(entry);
+          const label = entry.data.chapter === 0 ? '' : `Chapter ${entry.data.chapter}`;
+          return (
+            <li>
+              <a href={`/${bookSlug}/${slug}`} data-slug={slug}>
+                <span class="toc-chapter-number">{label}</span>
+                <span class="toc-chapter-title">{entry.data.title}</span>
+              </a>
+              <div class="toc-progress" data-slug={slug}></div>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+
+    <footer class="site-footer">Work in progress</footer>
+  </div>
+
+  <script>
+    function initTocProgress() {
+      const page = document.querySelector('.contents-page') as HTMLElement;
+      if (!page) return;
+      const bookSlug = page.dataset.bookSlug ?? '';
+
+      let progress: { lastChapter?: string; chapters?: Record<string, { current: number; furthest: number }> };
+      try {
+        const raw = localStorage.getItem('dotd:progress:' + bookSlug);
+        progress = raw ? JSON.parse(raw) : {};
+      } catch {
+        progress = {};
+      }
+
+      const chapters = progress.chapters ?? {};
+
+      // Fill per-chapter progress bars
+      document.querySelectorAll('.toc-progress').forEach(el => {
+        const slug = (el as HTMLElement).dataset.slug ?? '';
+        const ch = chapters[slug];
+        if (ch && ch.furthest > 0) {
+          const pct = Math.min(100, Math.round(ch.furthest * 100));
+          const fill = document.createElement('div');
+          fill.className = 'toc-progress-fill';
+          fill.style.width = pct + '%';
+          el.appendChild(fill);
+          if (pct >= 100) el.classList.add('complete');
+        }
+      });
+
+      // Show "Continue reading" if there's an in-progress chapter
+      if (progress.lastChapter && chapters[progress.lastChapter]) {
+        const ch = chapters[progress.lastChapter];
+        if (ch.current > 0 && ch.furthest < 1) {
+          const container = document.getElementById('continue-reading');
+          const link = document.getElementById('continue-link') as HTMLAnchorElement;
+          if (container && link) {
+            link.href = `/${bookSlug}/${progress.lastChapter}#resume`;
+            container.hidden = false;
+          }
+        }
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTocProgress);
+    } else {
+      initTocProgress();
+    }
+  </script>
+</ReaderLayout>

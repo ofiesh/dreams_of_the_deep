@@ -1,0 +1,213 @@
+/* Dreams of the Deep — Global Styles */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
+  background-color: #f8f5f0;
+  color: #1c1917;
+  line-height: 1.82;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---- PROGRESS BAR ---- */
+
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background-color: #a39890;
+  z-index: 100;
+  transition: width 0.15s ease-out;
+}
+
+/* ---- PAGED MODE ---- */
+
+html.paged-mode {
+  overflow: hidden;
+}
+
+html.paged-mode body {
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ---- LAYOUT ---- */
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+html.paged-mode .page {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Fixed px padding so the frame doesn't shift when font size changes */
+  padding: 48px 24px 0;
+}
+
+/* ---- READER THEMES ---- */
+
+html.theme-sepia {
+  --bg: #f0e6d3;
+  --fg: #3d3630;
+  --fg-muted: #7a6f63;
+  --border: #d4c4a8;
+  --progress: #a08c6e;
+}
+
+html.theme-dark {
+  --bg: #1a1a1a;
+  --fg: #c8c3bc;
+  --fg-muted: #7a7570;
+  --border: #333;
+  --progress: #5a5550;
+}
+
+html.theme-sepia body,
+html.theme-dark body {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+html.theme-sepia .progress-bar,
+html.theme-dark .progress-bar {
+  background-color: var(--progress);
+}
+
+html.theme-sepia .page-indicator,
+html.theme-dark .page-indicator {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .page-indicator::before {
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+
+html.theme-dark .page-indicator::before {
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+
+html.theme-sepia .chapter-header,
+html.theme-dark .chapter-header {
+  border-bottom-color: var(--border);
+}
+
+html.theme-sepia .chapter-number,
+html.theme-dark .chapter-number {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .chapter-title,
+html.theme-dark .chapter-title {
+  color: var(--fg);
+}
+
+html.theme-dark .chapter-body > p:first-of-type::first-letter {
+  color: var(--fg);
+}
+
+html.theme-sepia .epigraph,
+html.theme-dark .epigraph {
+  color: var(--fg-muted);
+  border-left-color: var(--border);
+}
+
+html.theme-sepia .epigraph-source,
+html.theme-dark .epigraph-source {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .section-break,
+html.theme-dark .section-break {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .scripture,
+html.theme-dark .scripture {
+  color: var(--fg);
+}
+
+html.theme-sepia .chapter-nav,
+html.theme-dark .chapter-nav {
+  border-top-color: var(--border);
+}
+
+html.theme-sepia .chapter-nav a,
+html.theme-dark .chapter-nav a {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .chapter-nav a:hover,
+html.theme-dark .chapter-nav a:hover {
+  color: var(--fg);
+}
+
+/* ---- FOOTER ---- */
+
+.site-footer {
+  text-align: center;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid #eae6e0;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a89f96;
+}
+
+/* ---- RESPONSIVE ---- */
+
+@media (max-width: 680px) {
+  html {
+    font-size: 17px;
+  }
+
+  .page {
+    padding: 2rem 1.25rem 3rem;
+  }
+
+  html.paged-mode .page {
+    padding: 32px 20px 0;
+  }
+}
+
+@media (max-width: 420px) {
+  html {
+    font-size: 16px;
+  }
+
+  .page {
+    padding: 1.5rem 1rem 2.5rem;
+  }
+
+  html.paged-mode .page {
+    padding: 24px 16px 0;
+  }
+}

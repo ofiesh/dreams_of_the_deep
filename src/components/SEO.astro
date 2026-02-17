@@ -1,0 +1,28 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  type?: 'website' | 'article';
+  bookTitle?: string;
+  chapterNumber?: number;
+}
+
+const { title, description, type = 'website', bookTitle, chapterNumber } = Astro.props;
+---
+
+{type === 'article' && bookTitle && (
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Chapter',
+    'name': title,
+    'position': chapterNumber,
+    'isPartOf': {
+      '@type': 'Book',
+      'name': bookTitle,
+      'author': {
+        '@type': 'Person',
+        'name': 'Nathanial',
+      },
+    },
+  })} />
+)}

@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import '../styles/landing.css';
+import '../styles/reader.css';
+---
+
+<BaseLayout title="Dreams of the Deep">
+  <div class="landing">
+    <p class="landing-site-title">Dreams of the Deep</p>
+
+    <div class="landing-book">
+      <div class="landing-cover">
+        <a href="/the-outer-tokens">
+          <img src="/images/the-outer-tokens/cover.png" alt="The Outer Tokens" />
+        </a>
+      </div>
+
+      <a href="/the-outer-tokens" class="landing-read-link">Read</a>
+    </div>
+  </div>
+</BaseLayout>

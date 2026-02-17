@@ -1,0 +1,31 @@
+{
+  "name": "dreams-of-the-deep",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.2.2",
+    "@neondatabase/serverless": "^1.0.0",
+    "astro": "^5.17.1",
+    "drizzle-orm": "^0.44.0",
+    "jsonwebtoken": "^9.0.2",
+    "remark-smartypants": "^3.0.2",
+    "stripe": "^17.7.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "drizzle-kit": "^0.31.0",
+    "typescript": "^5.8.0"
+  }
+}
