@@ -47,29 +47,18 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    // ---- Lambda Function (Astro SSR via Lambda Web Adapter) ----
-    const webAdapterLayer = lambda.LayerVersion.fromLayerVersionArn(
-      this, 'WebAdapterLayer',
-      // AWS Lambda Web Adapter v0.8.4 for x86_64 in us-east-2
-      'arn:aws:lambda:us-east-2:753240598075:layer:LambdaAdapterLayerX86:24'
-    );
-
+    // ---- Lambda Function (Astro SSR via native handler) ----
     const ssrFunction = new lambda.Function(this, 'SsrFunction', {
       functionName: `dotd-ssr-${stage}`,
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'run.handler',
-      code: lambda.Code.fromAsset(path.join(projectRoot, 'lambda-bundle')),
-      layers: [webAdapterLayer],
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(projectRoot, 'dist', 'server')),
       memorySize: 1024,
       timeout: cdk.Duration.seconds(30),
       environment: {
         CONTENT_BUCKET: contentBucket.bucketName,
         JWT_SECRET: process.env.JWT_SECRET || 'change-me-in-production',
         PREVIEW_TOKEN: process.env.PREVIEW_TOKEN || 'change-me-in-production',
-        RUST_LOG: 'info',
-        PORT: '4321',
-        HOST: '0.0.0.0',
-        READINESS_CHECK_PATH: '/',
       },
     });
 
@@ -137,7 +126,7 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
         originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       },
       additionalBehaviors: {
-        '/_astro/*': {
+        '/static/*': {
           origin: s3Origin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: assetCachePolicy,
@@ -166,7 +155,7 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
         s3deploy.CacheControl.maxAge(cdk.Duration.minutes(5)),
       ],
       distribution,
-      distributionPaths: ['/_astro/*'],
+      distributionPaths: ['/static/*'],
     });
 
     // ---- Route 53 Records ----

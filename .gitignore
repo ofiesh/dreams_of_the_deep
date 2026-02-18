@@ -1,9 +1,6 @@
 # build output
 dist/
 
-# generated types
-.astro/
-
 # dependencies
 node_modules/
 
@@ -23,9 +20,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
-
-# Lambda bundle (assembled during deploy)
-lambda-bundle/
 
 # CDK
 infra/dist/

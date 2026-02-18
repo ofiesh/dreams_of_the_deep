@@ -1,4 +1,4 @@
-import { z } from 'astro/zod';
+import { z } from 'zod';
 import { renderMarkdown } from './render-markdown';
 
 // Same schema as the old content.config.ts
@@ -111,7 +111,7 @@ function localProvider(): ContentProvider {
 let _provider: ContentProvider | null = null;
 function getProvider(): ContentProvider {
   if (!_provider) {
-    const bucket = import.meta.env.CONTENT_BUCKET;
+    const bucket = process.env.CONTENT_BUCKET;
     _provider = bucket ? s3Provider(bucket) : localProvider();
   }
   return _provider;

@@ -23,32 +23,13 @@ Write-Host "Deploying [$Stage]..." -ForegroundColor Cyan
 
 try {
     if (-not $SkipBuild) {
-        Write-Host "Building Astro site..." -ForegroundColor Cyan
+        Write-Host "Building site..." -ForegroundColor Cyan
         $env:CONTENT_BUCKET = "dotd-content-$Stage"
         npm run build
         if ($LASTEXITCODE -ne 0) { throw "Build failed" }
-
-        # Assemble lambda-bundle/
-        Write-Host "Assembling Lambda bundle..." -ForegroundColor Cyan
-        if (Test-Path "lambda-bundle") { Remove-Item -Recurse -Force "lambda-bundle" }
-        New-Item -ItemType Directory -Path "lambda-bundle" | Out-Null
-
-        # Copy server output
-        Copy-Item -Recurse "dist/server/*" "lambda-bundle/"
-
-        # Copy entry script
-        Copy-Item "lambda-entry/run.js" "lambda-bundle/"
-
-        # Copy package.json and install production deps for externalized modules
-        Copy-Item "package.json" "lambda-bundle/"
-        Copy-Item "package-lock.json" "lambda-bundle/"
-        Push-Location "lambda-bundle"
-        npm ci --omit=dev 2>&1 | Out-Null
-        Pop-Location
-
-        Write-Host "Lambda bundle assembled" -ForegroundColor Green
+        Write-Host "Build complete" -ForegroundColor Green
     } else {
-        Write-Host "Skipping build (using existing dist/ and lambda-bundle/)..." -ForegroundColor Yellow
+        Write-Host "Skipping build (using existing dist/)..." -ForegroundColor Yellow
     }
 
     Write-Host "Installing CDK dependencies..." -ForegroundColor Cyan
