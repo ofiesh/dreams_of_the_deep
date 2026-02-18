@@ -120,14 +120,8 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       enableAcceptEncodingBrotli: true,
     });
 
-    // Preview pages: no cache, forward cookies for auth
-    const noCachePolicy = new cloudfront.CachePolicy(this, 'NoCachePolicy', {
-      cachePolicyName: `dreams-no-cache-${stage}`,
-      defaultTtl: cdk.Duration.seconds(0),
-      maxTtl: cdk.Duration.seconds(0),
-      minTtl: cdk.Duration.seconds(0),
-      cookieBehavior: cloudfront.CacheCookieBehavior.allowList('dotd-preview'),
-    });
+    // Preview pages: no cache (cookies forwarded via origin request policy)
+    const noCachePolicy = cloudfront.CachePolicy.CACHING_DISABLED;
 
     // ---- CloudFront Distribution ----
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
