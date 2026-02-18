@@ -66,9 +66,10 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
         CONTENT_BUCKET: contentBucket.bucketName,
         JWT_SECRET: process.env.JWT_SECRET || 'change-me-in-production',
         PREVIEW_TOKEN: process.env.PREVIEW_TOKEN || 'change-me-in-production',
-        AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
+        RUST_LOG: 'info',
         PORT: '4321',
         HOST: '0.0.0.0',
+        READINESS_CHECK_PATH: '/',
       },
     });
 

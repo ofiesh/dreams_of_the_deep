@@ -37,18 +37,13 @@ try {
         Copy-Item -Recurse "dist/server/*" "lambda-bundle/"
 
         # Copy entry script
-        Copy-Item "lambda-entry/run.mjs" "lambda-bundle/"
+        Copy-Item "lambda-entry/run.js" "lambda-bundle/"
 
-        # Create package.json for ESM resolution
-        @'
-{
-  "type": "module"
-}
-'@ | Set-Content "lambda-bundle/package.json"
-
-        # Install production dependencies in lambda-bundle
+        # Copy package.json and install production deps for externalized modules
+        Copy-Item "package.json" "lambda-bundle/"
+        Copy-Item "package-lock.json" "lambda-bundle/"
         Push-Location "lambda-bundle"
-        npm install jsonwebtoken@9 2>&1 | Out-Null
+        npm ci --omit=dev 2>&1 | Out-Null
         Pop-Location
 
         Write-Host "Lambda bundle assembled" -ForegroundColor Green
