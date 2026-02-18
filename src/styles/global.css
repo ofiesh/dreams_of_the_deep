@@ -104,6 +104,7 @@ html.theme-dark .progress-bar {
 html.theme-sepia .page-indicator,
 html.theme-dark .page-indicator {
   color: var(--fg-muted);
+  background: var(--bg);
 }
 
 html.theme-sepia .page-indicator::before {
@@ -167,6 +168,71 @@ html.theme-dark .chapter-nav a {
 html.theme-sepia .chapter-nav a:hover,
 html.theme-dark .chapter-nav a:hover {
   color: var(--fg);
+}
+
+/* ---- TOC THEME OVERRIDES ---- */
+
+html.theme-sepia .book-title,
+html.theme-dark .book-title {
+  color: var(--fg);
+}
+
+html.theme-sepia .book-subtitle,
+html.theme-dark .book-subtitle {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .toc,
+html.theme-dark .toc {
+  border-top-color: var(--border);
+}
+
+html.theme-sepia .toc-list li,
+html.theme-dark .toc-list li {
+  border-bottom-color: var(--border);
+}
+
+html.theme-sepia .toc-list li:first-child,
+html.theme-dark .toc-list li:first-child {
+  border-top-color: var(--border);
+}
+
+html.theme-sepia .toc-list a,
+html.theme-dark .toc-list a {
+  color: var(--fg);
+}
+
+html.theme-sepia .toc-list a:hover,
+html.theme-dark .toc-list a:hover {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .toc-chapter-number,
+html.theme-dark .toc-chapter-number {
+  color: var(--fg-muted);
+}
+
+html.theme-sepia .continue-reading a,
+html.theme-dark .continue-reading a {
+  color: var(--fg-muted);
+  border-color: var(--border);
+}
+
+html.theme-sepia .continue-reading a:hover,
+html.theme-dark .continue-reading a:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+html.theme-sepia .toc-progress,
+html.theme-dark .toc-progress {
+  background: var(--border);
+}
+
+html.theme-sepia .site-footer,
+html.theme-dark .site-footer {
+  color: var(--fg-muted);
+  border-top-color: var(--border);
 }
 
 /* ---- FOOTER ---- */

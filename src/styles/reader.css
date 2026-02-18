@@ -319,17 +319,22 @@
   widows: 2;
 }
 
-/* Page indicator — fixed px sizing so font-size changes don't shift it */
+/* Page indicator — fixed to bottom of viewport so font-size changes can't shift it */
 .page-indicator {
-  text-align: center;
-  padding: 10px 0;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  padding: 10px 24px;
   font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #8a817a;
   user-select: none;
-  flex-shrink: 0;
-  position: relative;
+  background: #f8f5f0;
+  z-index: 10;
 }
 
 .indicator-nav {
@@ -369,8 +374,8 @@ html.theme-dark .indicator-nav:hover {
   content: '';
   position: absolute;
   top: -24px;
-  left: 0;
-  right: 0;
+  left: -24px;
+  right: -24px;
   height: 24px;
   background: linear-gradient(to top, #f8f5f0, transparent);
   pointer-events: none;
@@ -413,6 +418,18 @@ html.theme-dark .page-nav-btn {
 
 html.theme-dark .page-nav-btn:hover {
   color: var(--fg);
+}
+
+@media (max-width: 680px) {
+  .page-indicator {
+    padding: 10px 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-indicator {
+    padding: 10px 16px;
+  }
 }
 
 /* Click zone cursor hints */

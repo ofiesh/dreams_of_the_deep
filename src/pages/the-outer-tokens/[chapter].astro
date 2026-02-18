@@ -54,25 +54,26 @@ const nextHref = nextChapter ? `/${bookSlug}/${nextChapter.slug}` : '';
       </article>
     </div>
 
-    <div class="page-indicator" id="page-indicator">
-      <a class="indicator-nav" href={`/${bookSlug}`}>Contents</a>
-      <span class="page-nav">
-        <button class="page-nav-btn" id="page-prev" aria-label="Previous page">&lsaquo;</button>
-        <span id="page-counter">1 / 1</span>
-        <button class="page-nav-btn" id="page-next" aria-label="Next page">&rsaquo;</button>
-      </span>
-      <button class="settings-toggle" id="settings-toggle" aria-label="Reader settings">Aa</button>
-      <div class="settings-panel" id="settings-panel" hidden>
-        <div class="settings-row">
-          <button class="font-btn" id="font-down" aria-label="Decrease font size">A&minus;</button>
-          <span class="font-label" id="font-label">100%</span>
-          <button class="font-btn" id="font-up" aria-label="Increase font size">A+</button>
-        </div>
-        <div class="settings-row theme-row">
-          <button class="theme-btn" id="theme-light" data-theme="light" aria-label="Light theme">Light</button>
-          <button class="theme-btn" id="theme-sepia" data-theme="sepia" aria-label="Sepia theme">Sepia</button>
-          <button class="theme-btn" id="theme-dark" data-theme="dark" aria-label="Dark theme">Dark</button>
-        </div>
+  </div>
+
+  <div class="page-indicator" id="page-indicator">
+    <a class="indicator-nav" href="/">Home</a>
+    <span class="page-nav">
+      <button class="page-nav-btn" id="page-prev" aria-label="Previous page">&lsaquo;</button>
+      <span id="page-counter">1 / 1</span>
+      <button class="page-nav-btn" id="page-next" aria-label="Next page">&rsaquo;</button>
+    </span>
+    <button class="settings-toggle" id="settings-toggle" aria-label="Reader settings">Aa</button>
+    <div class="settings-panel" id="settings-panel" hidden>
+      <div class="settings-row">
+        <button class="font-btn" id="font-down" aria-label="Decrease font size">A&minus;</button>
+        <span class="font-label" id="font-label">100%</span>
+        <button class="font-btn" id="font-up" aria-label="Increase font size">A+</button>
+      </div>
+      <div class="settings-row theme-row">
+        <button class="theme-btn" id="theme-light" data-theme="light" aria-label="Light theme">Light</button>
+        <button class="theme-btn" id="theme-sepia" data-theme="sepia" aria-label="Sepia theme">Sepia</button>
+        <button class="theme-btn" id="theme-dark" data-theme="dark" aria-label="Dark theme">Dark</button>
       </div>
     </div>
   </div>

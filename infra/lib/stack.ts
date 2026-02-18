@@ -46,17 +46,6 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    // ---- Deploy static assets to S3 ----
-    new s3deploy.BucketDeployment(this, 'DeployStaticAssets', {
-      sources: [s3deploy.Source.asset(path.join(distPath, 'client'))],
-      destinationBucket: staticBucket,
-      cacheControl: [
-        s3deploy.CacheControl.setPublic(),
-        s3deploy.CacheControl.maxAge(cdk.Duration.days(365)),
-        s3deploy.CacheControl.immutable(),
-      ],
-    });
-
     // ---- CloudFront Function: rewrite URIs to index.html ----
     // defaultRootObject only works for "/", not subdirectories.
     // This rewrites /the-outer-tokens → /the-outer-tokens/index.html
@@ -138,6 +127,18 @@ function handler(event) {
           cachePolicy: assetCachePolicy,
         },
       },
+    });
+
+    // ---- Deploy static assets to S3 ----
+    new s3deploy.BucketDeployment(this, 'DeployStaticAssets', {
+      sources: [s3deploy.Source.asset(path.join(distPath, 'client'))],
+      destinationBucket: staticBucket,
+      cacheControl: [
+        s3deploy.CacheControl.setPublic(),
+        s3deploy.CacheControl.maxAge(cdk.Duration.minutes(5)),
+      ],
+      distribution,
+      distributionPaths: ['/*'],
     });
 
     // ---- Route 53 Records ----

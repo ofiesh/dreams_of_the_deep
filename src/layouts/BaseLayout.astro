@@ -29,6 +29,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://dreamsof
 
   <!-- Preconnect to Google Fonts for potential future use -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <script is:inline>
+    // Apply saved reader settings before paint to avoid theme/font flash
+    (function() {
+      try {
+        var s = JSON.parse(localStorage.getItem('dotd:reader-settings') || '{}');
+        if (s.theme && s.theme !== 'light') {
+          document.documentElement.classList.add('theme-' + s.theme);
+        }
+        if (s.fontSize && s.fontSize !== 18) {
+          document.documentElement.style.fontSize = s.fontSize + 'px';
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
   <slot />

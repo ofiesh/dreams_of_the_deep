@@ -8,8 +8,8 @@ const stage = app.node.tryGetContext('stage') || 'production';
 
 new DreamsOfTheDeepStack(app, `DreamsOfTheDeep-${stage}`, {
   env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+    account: '015809852967',
+    region: 'us-east-2',
   },
   stage,
 });

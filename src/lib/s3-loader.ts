@@ -12,15 +12,15 @@ interface S3LoaderOptions {
  * Astro 5 content loader that reads markdown files from an S3 bucket.
  *
  * Bucket structure expected:
- *   {book-slug}/prologue.md
- *   {book-slug}/chapter-01.md
+ *   {book-slug}/prologue.md      (with YAML frontmatter)
+ *   {book-slug}/chapter-01.md    (with YAML frontmatter)
  *   {book-slug}/cover.png
  *
- * Only .md files are loaded. Entry IDs match the glob loader format:
- *   "the-outer-tokens/chapter-01"
+ * Required frontmatter fields: title, chapter, book, status
+ * Entry IDs match the glob loader format: "the-outer-tokens/chapter-01"
  */
 export function s3Loader(options: S3LoaderOptions): Loader {
-  const { bucket, region = 'us-east-1' } = options;
+  const { bucket, region = 'us-east-2' } = options;
 
   return {
     name: 's3-loader',
@@ -46,7 +46,6 @@ export function s3Loader(options: S3LoaderOptions): Loader {
         for (const obj of listResult.Contents ?? []) {
           const key = obj.Key!;
           if (key.endsWith('.md')) {
-            // Fetch markdown content
             const getCmd = new GetObjectCommand({ Bucket: bucket, Key: key });
             const result = await client.send(getCmd);
             const body = await result.Body!.transformToString('utf-8');

@@ -63,13 +63,13 @@ function snapToLineHeight(height: number, lineHeight: number): number {
 }
 
 function calculateLayout() {
-  const indicatorHeight = document.getElementById('page-indicator')?.offsetHeight ?? 36;
+  const indicator = document.getElementById('page-indicator');
+  const indicatorHeight = indicator?.offsetHeight ?? 36;
   const page = document.getElementById('reader')!;
   const pageStyle = getComputedStyle(page);
   const paddingTop = parseFloat(pageStyle.paddingTop);
-  const paddingBottom = parseFloat(pageStyle.paddingBottom);
 
-  const availableHeight = window.innerHeight - paddingTop - paddingBottom - indicatorHeight;
+  const availableHeight = window.innerHeight - paddingTop - indicatorHeight;
   const lineHeight = getLineHeight();
   const pagerHeight = snapToLineHeight(availableHeight, lineHeight);
 
