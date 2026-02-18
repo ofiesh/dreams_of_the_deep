@@ -47,6 +47,7 @@ let viewport: HTMLElement;
 let chapterBody: HTMLElement;
 let pageCounter: HTMLElement;
 let progressBar: HTMLElement | null;
+let runningHeader: HTMLElement | null;
 let bookSlug: string;
 let chapterSlug: string;
 let prevChapterHref: string;
@@ -64,12 +65,14 @@ function snapToLineHeight(height: number, lineHeight: number): number {
 
 function calculateLayout() {
   const indicator = document.getElementById('page-indicator');
-  const indicatorHeight = indicator?.offsetHeight ?? 36;
+  const indicatorHeight = indicator?.offsetHeight ?? 52;
+  const header = document.getElementById('running-header');
+  const headerHeight = header ? header.offsetHeight : 0;
   const page = document.getElementById('reader')!;
   const pageStyle = getComputedStyle(page);
   const paddingTop = parseFloat(pageStyle.paddingTop);
 
-  const availableHeight = window.innerHeight - paddingTop - indicatorHeight;
+  const availableHeight = window.innerHeight - paddingTop - indicatorHeight - headerHeight;
   const lineHeight = getLineHeight();
   const pagerHeight = snapToLineHeight(availableHeight, lineHeight);
 
@@ -99,6 +102,11 @@ function goToPage(n: number, save = true) {
     progressBar.style.width = (ratio * 100) + '%';
   }
 
+  // Show running header on pages 2+
+  if (runningHeader) {
+    runningHeader.classList.toggle('visible', currentPage > 0);
+  }
+
   if (save) {
     saveProgress();
   }
@@ -116,7 +124,7 @@ function prevPage() {
   if (currentPage > 0) {
     goToPage(currentPage - 1);
   } else if (prevChapterHref) {
-    location.href = prevChapterHref;
+    location.href = prevChapterHref + '#last';
   }
 }
 
@@ -148,6 +156,11 @@ function saveProgress() {
 }
 
 function getInitialPage(): number {
+  // #last hash: go to last page (used when going back from next chapter)
+  if (location.hash === '#last') {
+    return totalPages - 1;
+  }
+
   // #resume hash: restore saved position (used by "Continue reading" link)
   if (location.hash === '#resume') {
     const progress = loadBookProgress();
@@ -389,6 +402,7 @@ function init() {
   chapterBody = cb;
   pageCounter = pc;
   progressBar = document.getElementById('progress-bar');
+  runningHeader = document.getElementById('running-header');
   bookSlug = reader.dataset.bookSlug ?? '';
   chapterSlug = reader.dataset.chapterSlug ?? '';
   prevChapterHref = reader.dataset.prevChapter ?? '';

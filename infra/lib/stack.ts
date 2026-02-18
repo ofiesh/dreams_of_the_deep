@@ -6,6 +6,7 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -18,7 +19,7 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
     super(scope, id, props);
 
     const { stage } = props;
-    const distPath = path.join(__dirname, '..', '..', 'dist');
+    const projectRoot = path.join(__dirname, '..', '..');
     const domainName = 'dreamsofthedeep.com';
 
     // ---- Domain + Certificate ----
@@ -38,7 +39,7 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       versioned: true,
     });
 
-    // ---- S3 Bucket for static assets ----
+    // ---- S3 Bucket for static assets (/_astro/* hashed CSS/JS) ----
     const staticBucket = new s3.Bucket(this, 'StaticAssets', {
       bucketName: `dreams-of-the-deep-static-${stage}`,
       removalPolicy: stage === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
@@ -46,39 +47,50 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    // ---- CloudFront Function: rewrite URIs to index.html ----
-    // defaultRootObject only works for "/", not subdirectories.
-    // This rewrites /the-outer-tokens → /the-outer-tokens/index.html
-    const urlRewrite = new cloudfront.Function(this, 'UrlRewrite', {
-      functionName: `dreams-url-rewrite-${stage}`,
-      code: cloudfront.FunctionCode.fromInline(`
-function handler(event) {
-  var request = event.request;
-  var uri = request.uri;
-  if (uri.endsWith('/')) {
-    request.uri += 'index.html';
-  } else if (!uri.includes('.')) {
-    request.uri += '/index.html';
-  }
-  return request;
-}
-      `.trim()),
+    // ---- Lambda Function (Astro SSR via Lambda Web Adapter) ----
+    const webAdapterLayer = lambda.LayerVersion.fromLayerVersionArn(
+      this, 'WebAdapterLayer',
+      // AWS Lambda Web Adapter v0.8.4 for x86_64 in us-east-2
+      'arn:aws:lambda:us-east-2:753240598075:layer:LambdaAdapterLayerX86:24'
+    );
+
+    const ssrFunction = new lambda.Function(this, 'SsrFunction', {
+      functionName: `dotd-ssr-${stage}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'run.handler',
+      code: lambda.Code.fromAsset(path.join(projectRoot, 'lambda-bundle')),
+      layers: [webAdapterLayer],
+      memorySize: 1024,
+      timeout: cdk.Duration.seconds(30),
+      environment: {
+        CONTENT_BUCKET: contentBucket.bucketName,
+        JWT_SECRET: process.env.JWT_SECRET || 'change-me-in-production',
+        PREVIEW_TOKEN: process.env.PREVIEW_TOKEN || 'change-me-in-production',
+        AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
+        PORT: '4321',
+        HOST: '0.0.0.0',
+      },
     });
 
-    // ---- CloudFront Distribution ----
+    // Grant Lambda read access to content bucket
+    contentBucket.grantRead(ssrFunction);
+
+    // Lambda Function URL (no API Gateway needed)
+    const functionUrl = ssrFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+    });
+
+    // ---- CloudFront Origins ----
     const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(staticBucket);
+    const contentOrigin = origins.S3BucketOrigin.withOriginAccessControl(contentBucket);
 
-    // Cache policy for static pages (moderate caching, allows fast redeploy)
-    const pageCachePolicy = new cloudfront.CachePolicy(this, 'PageCachePolicy', {
-      cachePolicyName: `dreams-pages-${stage}`,
-      defaultTtl: cdk.Duration.hours(1),
-      maxTtl: cdk.Duration.days(1),
-      minTtl: cdk.Duration.seconds(0),
-      enableAcceptEncodingGzip: true,
-      enableAcceptEncodingBrotli: true,
-    });
+    // Lambda Function URL origin
+    // Extract hostname from function URL (https://xxx.lambda-url.us-east-2.on.aws/)
+    const lambdaOrigin = new origins.FunctionUrlOrigin(functionUrl);
 
-    // Cache policy for hashed assets (aggressive, immutable)
+    // ---- Cache Policies ----
+
+    // Immutable hashed assets (/_astro/*)
     const assetCachePolicy = new cloudfront.CachePolicy(this, 'AssetCachePolicy', {
       cachePolicyName: `dreams-assets-${stage}`,
       defaultTtl: cdk.Duration.days(365),
@@ -88,32 +100,46 @@ function handler(event) {
       enableAcceptEncodingBrotli: true,
     });
 
+    // Images (24 hour cache)
+    const imageCachePolicy = new cloudfront.CachePolicy(this, 'ImageCachePolicy', {
+      cachePolicyName: `dreams-images-${stage}`,
+      defaultTtl: cdk.Duration.hours(24),
+      maxTtl: cdk.Duration.days(7),
+      minTtl: cdk.Duration.seconds(0),
+      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingBrotli: true,
+    });
+
+    // Public pages (1 hour TTL, invalidated on content change)
+    const pageCachePolicy = new cloudfront.CachePolicy(this, 'PageCachePolicy', {
+      cachePolicyName: `dreams-pages-${stage}`,
+      defaultTtl: cdk.Duration.hours(1),
+      maxTtl: cdk.Duration.days(1),
+      minTtl: cdk.Duration.seconds(0),
+      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingBrotli: true,
+    });
+
+    // Preview pages: no cache, forward cookies for auth
+    const noCachePolicy = new cloudfront.CachePolicy(this, 'NoCachePolicy', {
+      cachePolicyName: `dreams-no-cache-${stage}`,
+      defaultTtl: cdk.Duration.seconds(0),
+      maxTtl: cdk.Duration.seconds(0),
+      minTtl: cdk.Duration.seconds(0),
+      cookieBehavior: cloudfront.CacheCookieBehavior.allowList('dotd-preview'),
+    });
+
+    // ---- CloudFront Distribution ----
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       domainNames: stage === 'production' ? [domainName, `www.${domainName}`] : [],
       certificate: stage === 'production' ? certificate : undefined,
-      defaultRootObject: 'index.html',
-      errorResponses: [
-        {
-          httpStatus: 403,
-          responseHttpStatus: 404,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.seconds(0),
-        },
-        {
-          httpStatus: 404,
-          responseHttpStatus: 404,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.seconds(0),
-        },
-      ],
+      // No defaultRootObject — Lambda handles /
       defaultBehavior: {
-        origin: s3Origin,
+        origin: lambdaOrigin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: pageCachePolicy,
-        functionAssociations: [{
-          function: urlRewrite,
-          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-        }],
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       },
       additionalBehaviors: {
         '/_astro/*': {
@@ -122,23 +148,30 @@ function handler(event) {
           cachePolicy: assetCachePolicy,
         },
         '/images/*': {
-          origin: s3Origin,
+          origin: contentOrigin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: assetCachePolicy,
+          cachePolicy: imageCachePolicy,
+        },
+        '/preview/*': {
+          origin: lambdaOrigin,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: noCachePolicy,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         },
       },
     });
 
     // ---- Deploy static assets to S3 ----
     new s3deploy.BucketDeployment(this, 'DeployStaticAssets', {
-      sources: [s3deploy.Source.asset(path.join(distPath, 'client'))],
+      sources: [s3deploy.Source.asset(path.join(projectRoot, 'dist', 'client'))],
       destinationBucket: staticBucket,
       cacheControl: [
         s3deploy.CacheControl.setPublic(),
         s3deploy.CacheControl.maxAge(cdk.Duration.minutes(5)),
       ],
       distribution,
-      distributionPaths: ['/*'],
+      distributionPaths: ['/_astro/*'],
     });
 
     // ---- Route 53 Records ----
@@ -193,6 +226,11 @@ function handler(event) {
     new cdk.CfnOutput(this, 'ContentBucketName', {
       value: contentBucket.bucketName,
       description: 'S3 bucket for book content',
+    });
+
+    new cdk.CfnOutput(this, 'FunctionUrl', {
+      value: functionUrl.url,
+      description: 'Lambda Function URL',
     });
   }
 }

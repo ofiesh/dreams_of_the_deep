@@ -1,8 +1,53 @@
 ---
-import ReaderLayout from '../../layouts/ReaderLayout.astro';
-import { getPublishedChapters, chapterLabel } from '../../lib/chapters';
-import { getChapter } from '../../lib/content-service';
+import jwt from 'jsonwebtoken';
+import ReaderLayout from '../../../layouts/ReaderLayout.astro';
+import { getAllChapters, chapterLabel } from '../../../lib/chapters';
+import { getChapter } from '../../../lib/content-service';
 
+const PREVIEW_TOKEN = import.meta.env.PREVIEW_TOKEN;
+const JWT_SECRET = import.meta.env.JWT_SECRET;
+
+// --- Auth check ---
+function isAuthorized(request: Request): boolean {
+  if (!PREVIEW_TOKEN || !JWT_SECRET) return false;
+
+  // Check query param token
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token');
+  if (token === PREVIEW_TOKEN) return true;
+
+  // Check cookie
+  const cookies = request.headers.get('cookie') ?? '';
+  const match = cookies.match(/dotd-preview=([^;]+)/);
+  if (match) {
+    try {
+      jwt.verify(match[1], JWT_SECRET);
+      return true;
+    } catch { /* invalid */ }
+  }
+
+  return false;
+}
+
+if (!isAuthorized(Astro.request)) {
+  return Astro.redirect('/preview/login');
+}
+
+// Set preview cookie if authenticating via token param
+const url = new URL(Astro.request.url);
+const setCookie = url.searchParams.has('token');
+if (setCookie) {
+  const cookieValue = jwt.sign({ preview: true }, JWT_SECRET!, { expiresIn: '24h' });
+  Astro.cookies.set('dotd-preview', cookieValue, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 86400,
+    path: '/preview',
+  });
+}
+
+// --- Load chapter ---
 const bookSlug = 'the-outer-tokens';
 const chapterParam = Astro.params.chapter!;
 
@@ -11,35 +56,32 @@ if (!entry) {
   return new Response('Not found', { status: 404 });
 }
 
-// Only serve published chapters on public routes
-if (entry.data.status !== 'published') {
-  return new Response('Not found', { status: 404 });
-}
-
-const chapters = await getPublishedChapters(bookSlug);
+const chapters = await getAllChapters(bookSlug);
 const entryIndex = chapters.findIndex((e) => e.slug === chapterParam);
 const prev = entryIndex > 0 ? chapters[entryIndex - 1] : null;
 const next = entryIndex < chapters.length - 1 ? chapters[entryIndex + 1] : null;
 
 const label = chapterLabel(entry.data.chapter);
-const prevHref = prev ? `/${bookSlug}/${prev.slug}` : '';
-const nextHref = next ? `/${bookSlug}/${next.slug}` : '';
+const prevHref = prev ? `/preview/${bookSlug}/${prev.slug}` : '';
+const nextHref = next ? `/preview/${bookSlug}/${next.slug}` : '';
+const isDraft = entry.data.status === 'draft';
 ---
 
 <ReaderLayout
-  title={`${entry.data.title} — The Outer Tokens`}
+  title={`${isDraft ? '[DRAFT] ' : ''}${entry.data.title} — The Outer Tokens`}
   description={entry.data.summary}
 >
   <div
     class="page"
     id="reader"
     data-book-slug={bookSlug}
-    data-chapter-slug={chapterParam}
+    data-chapter-slug={entry.slug}
     data-prev-chapter={prevHref}
     data-next-chapter={nextHref}
     data-chapter-label={label}
     data-chapter-title={entry.data.title}
   >
+    {isDraft && <div class="preview-banner">Draft Preview</div>}
     <div class="running-header" id="running-header">{label} — {entry.data.title}</div>
     <div class="pager-viewport" id="pager-viewport">
       <article class="chapter-body" id="chapter-body">
@@ -51,14 +93,13 @@ const nextHref = next ? `/${bookSlug}/${next.slug}` : '';
         <Fragment set:html={entry.html} />
       </article>
     </div>
-
   </div>
 
   <div class="page-indicator" id="page-indicator">
     <div class="indicator-row indicator-row-nav">
       <a class="indicator-link" href="/">Home</a>
       <span class="indicator-sep">/</span>
-      <a class="indicator-link" href={`/${bookSlug}`}>Contents</a>
+      <a class="indicator-link" href={`/preview/${bookSlug}`}>Contents</a>
     </div>
     <div class="indicator-row indicator-row-pages">
       <span class="page-nav">
@@ -83,6 +124,6 @@ const nextHref = next ? `/${bookSlug}/${next.slug}` : '';
   </div>
 
   <script>
-    import '../../scripts/paged-reader.ts';
+    import '../../../scripts/paged-reader.ts';
   </script>
 </ReaderLayout>

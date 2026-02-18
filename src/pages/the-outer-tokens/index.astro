@@ -1,6 +1,6 @@
 ---
 import ReaderLayout from '../../layouts/ReaderLayout.astro';
-import { getPublishedChapters, chapterLabel, chapterSlug } from '../../lib/chapters';
+import { getPublishedChapters } from '../../lib/chapters';
 
 const bookSlug = 'the-outer-tokens';
 const chapters = await getPublishedChapters(bookSlug);
@@ -18,21 +18,21 @@ const chapters = await getPublishedChapters(bookSlug);
     <nav class="toc">
       <ol class="toc-list">
         {chapters.map((entry) => {
-          const slug = chapterSlug(entry);
           const label = entry.data.chapter === 0 ? '' : `Chapter ${entry.data.chapter}`;
           return (
             <li>
-              <a href={`/${bookSlug}/${slug}`} data-slug={slug}>
+              <a href={`/${bookSlug}/${entry.slug}`} data-slug={entry.slug}>
                 <span class="toc-chapter-number">{label}</span>
                 <span class="toc-chapter-title">{entry.data.title}</span>
               </a>
-              <div class="toc-progress" data-slug={slug}></div>
+              <div class="toc-progress" data-slug={entry.slug}></div>
             </li>
           );
         })}
       </ol>
     </nav>
 
+    <div class="toc-home"><a href="/">&larr; Home</a></div>
     <footer class="site-footer">Work in progress</footer>
   </div>
 

@@ -1,4 +1,8 @@
-import { getCollection } from 'astro:content';
+import {
+  getPublishedChapters as fetchPublished,
+  getAllChapters as fetchAll,
+  type ChapterEntry,
+} from './content-service';
 
 const NUM_WORDS = [
   '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -17,25 +21,11 @@ export function chapterLabel(num: number): string {
 }
 
 /** Get all published chapters for a book, sorted by chapter number. */
-export async function getPublishedChapters(bookSlug: string) {
-  const allEntries = await getCollection('books');
-  return allEntries
-    .filter((e) => e.data.book === bookSlug && e.data.status === 'published')
-    .sort((a, b) => a.data.chapter - b.data.chapter);
+export async function getPublishedChapters(bookSlug: string): Promise<ChapterEntry[]> {
+  return fetchPublished(bookSlug);
 }
 
 /** Get all chapters (including drafts) for a book, sorted by chapter number. */
-export async function getAllChapters(bookSlug: string) {
-  const allEntries = await getCollection('books');
-  return allEntries
-    .filter((e) => e.data.book === bookSlug)
-    .sort((a, b) => a.data.chapter - b.data.chapter);
-}
-
-/** Derive the URL slug from a collection entry's ID. */
-export function chapterSlug(entry: { id: string }): string {
-  // ID from glob loader is like "the-outer-tokens/chapter-01"
-  // We want just "chapter-01" or "prologue"
-  const parts = entry.id.split('/');
-  return parts[parts.length - 1];
+export async function getAllChapters(bookSlug: string): Promise<ChapterEntry[]> {
+  return fetchAll(bookSlug);
 }

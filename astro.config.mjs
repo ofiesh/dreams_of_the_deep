@@ -8,7 +8,7 @@ import { remarkScripture } from './src/plugins/remark-scripture.mjs';
 import remarkSmartypants from 'remark-smartypants';
 
 export default defineConfig({
-  output: 'static',
+  output: 'server',
   adapter: node({ mode: 'standalone' }),
   markdown: {
     remarkPlugins: [
