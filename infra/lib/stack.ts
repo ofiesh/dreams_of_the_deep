@@ -6,6 +6,7 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -46,6 +47,34 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
+    // ---- Lambda Function for server-side routes (API endpoints) ----
+    const ssrFunction = new lambda.Function(this, 'SsrFunction', {
+      functionName: `dreams-ssr-${stage}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'entry.handler',
+      code: lambda.Code.fromAsset(path.join(distPath, 'server')),
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(30),
+      environment: {
+        NODE_ENV: 'production',
+        ASTRO_NODE_AUTOSTART: 'false',
+        HOST: '0.0.0.0',
+        PORT: '4321',
+        // Runtime secrets passed via CDK context or env vars at deploy time
+        DATABASE_URL: process.env.DATABASE_URL || '',
+        JWT_SECRET: process.env.JWT_SECRET || '',
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+        STRIPE_PRICE_PREMIUM: process.env.STRIPE_PRICE_PREMIUM || '',
+      },
+    });
+
+    // Lambda Function URL (HTTPS endpoint for CloudFront)
+    const functionUrl = ssrFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      invokeMode: lambda.InvokeMode.RESPONSE_STREAM,
+    });
+
     // ---- CloudFront Function: rewrite URIs to index.html ----
     // defaultRootObject only works for "/", not subdirectories.
     // This rewrites /the-outer-tokens → /the-outer-tokens/index.html
@@ -55,6 +84,9 @@ export class DreamsOfTheDeepStack extends cdk.Stack {
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
+  if (uri.startsWith('/api/')) {
+    return request;
+  }
   if (uri.endsWith('/')) {
     request.uri += 'index.html';
   } else if (!uri.includes('.')) {
@@ -67,6 +99,9 @@ function handler(event) {
 
     // ---- CloudFront Distribution ----
     const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(staticBucket);
+
+    // Lambda origin for /api/* routes
+    const lambdaOrigin = new origins.FunctionUrlOrigin(functionUrl);
 
     // Cache policy for static pages (moderate caching, allows fast redeploy)
     const pageCachePolicy = new cloudfront.CachePolicy(this, 'PageCachePolicy', {
@@ -86,6 +121,17 @@ function handler(event) {
       minTtl: cdk.Duration.days(1),
       enableAcceptEncodingGzip: true,
       enableAcceptEncodingBrotli: true,
+    });
+
+    // Origin request policy for API routes — forward all needed headers & body
+    const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'ApiOriginRequestPolicy', {
+      originRequestPolicyName: `dreams-api-origin-${stage}`,
+      headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
+        'content-type',
+        'cookie',
+        'stripe-signature',
+      ),
+      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
     });
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
@@ -116,6 +162,13 @@ function handler(event) {
         }],
       },
       additionalBehaviors: {
+        '/api/*': {
+          origin: lambdaOrigin,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: apiOriginRequestPolicy,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        },
         '/_astro/*': {
           origin: s3Origin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -193,6 +246,16 @@ function handler(event) {
     new cdk.CfnOutput(this, 'ContentBucketName', {
       value: contentBucket.bucketName,
       description: 'S3 bucket for book content',
+    });
+
+    new cdk.CfnOutput(this, 'SsrFunctionName', {
+      value: ssrFunction.functionName,
+      description: 'Lambda function for SSR API routes',
+    });
+
+    new cdk.CfnOutput(this, 'SsrFunctionUrl', {
+      value: functionUrl.url,
+      description: 'Lambda function URL',
     });
   }
 }
