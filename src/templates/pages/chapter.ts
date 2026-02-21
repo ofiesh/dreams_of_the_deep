@@ -1,10 +1,11 @@
 import { html, raw } from 'hono/html';
 import { readerLayout } from '../reader-layout';
-import type { ChapterEntry } from '../../lib/content-service';
+import type { ChapterEntry, BookMeta } from '../../lib/content-service';
 
 interface ChapterPageProps {
   entry: ChapterEntry;
   bookSlug: string;
+  book: BookMeta;
   label: string;
   prevHref: string;
   nextHref: string;
@@ -16,6 +17,7 @@ interface ChapterPageProps {
 export function chapterPage({
   entry,
   bookSlug,
+  book,
   label,
   prevHref,
   nextHref,
@@ -23,8 +25,12 @@ export function chapterPage({
   preview,
   isDraft,
 }: ChapterPageProps) {
+  // Extract version tag from slug: "chapter-01-v3-alt" → "v3-alt"
+  const versionMatch = entry.slug.match(/-(v\d+.*)$/);
+  const versionTag = preview && versionMatch ? versionMatch[1] : '';
   const titlePrefix = isDraft ? '[DRAFT] ' : '';
-  const title = `${titlePrefix}${entry.data.title} — The Outer Tokens`;
+  const versionSuffix = versionTag ? ` (${versionTag})` : '';
+  const title = `${titlePrefix}${entry.data.title}${versionSuffix} — ${book.title}`;
 
   const seoJson = JSON.stringify({
     '@context': 'https://schema.org',
@@ -33,7 +39,7 @@ export function chapterPage({
     position: entry.data.chapter,
     isPartOf: {
       '@type': 'Book',
-      name: 'The Outer Tokens',
+      name: book.title,
       author: { '@type': 'Person', name: 'Nathanial' },
     },
   });
@@ -41,6 +47,7 @@ export function chapterPage({
   return readerLayout({
     title,
     description: entry.data.summary,
+    bookAccent: book.accentColor,
     children: html`
       ${!preview ? html`<script type="application/ld+json">${raw(seoJson)}</script>` : ''}
       <div

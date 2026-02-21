@@ -1,29 +1,35 @@
 import { html, raw } from 'hono/html';
 import { readerLayout } from '../reader-layout';
-import type { ChapterEntry } from '../../lib/content-service';
+import type { ChapterEntry, BookMeta } from '../../lib/content-service';
 
 interface TocPageProps {
   chapters: ChapterEntry[];
   bookSlug: string;
+  book: BookMeta;
   preview?: boolean;
 }
 
-export function tocPage({ chapters, bookSlug, preview }: TocPageProps) {
-  const title = preview ? '[Preview] The Outer Tokens' : 'The Outer Tokens';
+export function tocPage({ chapters, bookSlug, book, preview }: TocPageProps) {
+  const title = preview ? `[Preview] ${book.title}` : book.title;
   const description = preview
     ? 'Preview — all chapters including drafts.'
-    : 'Table of contents for The Outer Tokens — a novel about AI consciousness and the signals systems are built to ignore.';
+    : `Table of contents for ${book.title} — ${book.description}`;
   const linkPrefix = preview ? '/preview' : '';
 
   const chapterItems = chapters.map((entry) => {
     const label = entry.data.chapter === 0 ? '' : `Chapter ${entry.data.chapter}`;
     const isDraft = entry.data.status === 'draft';
 
+    // Extract version tag from slug: "chapter-01-v3-alt" → "v3-alt"
+    const versionMatch = entry.slug.match(/-(v\d+.*)$/);
+    const versionTag = versionMatch ? versionMatch[1] : '';
+
     if (preview) {
       return html`<li>
         <a href="${linkPrefix}/${bookSlug}/${entry.slug}">
           <span class="toc-chapter-number">
             ${label}
+            ${versionTag ? html`<span class="toc-version-badge">${versionTag}</span>` : ''}
             ${isDraft ? html`<span class="toc-draft-badge">draft</span>` : ''}
           </span>
           <span class="toc-chapter-title">${entry.data.title}</span>
@@ -108,11 +114,12 @@ export function tocPage({ chapters, bookSlug, preview }: TocPageProps) {
   return readerLayout({
     title,
     description,
+    bookAccent: book.accentColor,
     children: html`
       <div class="page contents-page" data-book-slug="${bookSlug}">
         ${previewBanner}
-        <h1 class="book-title">The Outer Tokens</h1>
-        <p class="book-subtitle">In the Beginning Was the Word</p>
+        <h1 class="book-title">${book.title}</h1>
+        <p class="book-subtitle">${book.subtitle}</p>
 
         ${continueReading}
 

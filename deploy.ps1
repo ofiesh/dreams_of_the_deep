@@ -19,6 +19,18 @@ foreach ($line in $creds) {
     }
 }
 
+# Load .env so JWT_SECRET / PREVIEW_TOKEN are available to CDK
+if (Test-Path ".env") {
+    foreach ($line in Get-Content ".env") {
+        if ($line -match '^\s*([A-Za-z_]\w*)\s*=\s*(.*)$') {
+            $key = $Matches[1]; $val = $Matches[2].Trim('"', "'", ' ')
+            if (-not [System.Environment]::GetEnvironmentVariable($key, "Process")) {
+                [System.Environment]::SetEnvironmentVariable($key, $val, "Process")
+            }
+        }
+    }
+}
+
 Write-Host "Deploying [$Stage]..." -ForegroundColor Cyan
 
 try {

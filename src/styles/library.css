@@ -1,0 +1,301 @@
+/* Library / Landing page — dark sci-fi theme */
+
+.library {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #141820;
+  color: #e0ddd8;
+  position: relative;
+  overflow: hidden;
+  padding: 4rem 1.5rem;
+}
+
+/* ---- STARFIELD + NEBULA ---- */
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.library-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.nebula {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  animation: drift-nebula 30s infinite ease-in-out;
+}
+
+.nebula-1 {
+  width: 500px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(60, 50, 80, 0.15), transparent 70%);
+  top: -5%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.nebula-2 {
+  width: 450px;
+  height: 350px;
+  background: radial-gradient(ellipse, rgba(40, 60, 80, 0.12), transparent 70%);
+  bottom: -5%;
+  right: -10%;
+  animation-delay: -15s;
+}
+
+@keyframes drift-nebula {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+    opacity: 0.6;
+  }
+}
+
+/* ---- HEADER ---- */
+
+.library-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.library-title {
+  font-size: 1rem;
+  font-weight: normal;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #d0cbc4;
+  margin-bottom: 0.5rem;
+}
+
+.library-tagline {
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  color: #8a857e;
+  font-style: italic;
+}
+
+/* ---- BOOK GRID ---- */
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  color: #e0ddd8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(20, 24, 32, 0.9);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.book-card:hover {
+  border-color: rgba(200, 195, 188, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.book-card-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #e0ddd8;
+  padding: 2rem 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.book-card-link:hover {
+  transform: translateY(-2px);
+}
+
+.book-card-cover {
+  max-width: 180px;
+  width: 80%;
+  margin-bottom: 1.5rem;
+}
+
+.book-card-cover img {
+  width: 100%;
+  height: auto;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.book-card-info {
+  text-align: center;
+}
+
+.book-card-title {
+  font-size: 1.1rem;
+  font-weight: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.book-card-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a9590;
+}
+
+.book-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a9590;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  padding: 2px 6px;
+}
+
+/* ---- PROGRESS RING ---- */
+
+.book-card-progress {
+  margin-top: 1rem;
+  width: 36px;
+  height: 36px;
+}
+
+.progress-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 2;
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke: var(--card-accent, #a39890);
+  stroke-width: 2;
+  stroke-dasharray: 0;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.progress-ring-fill:not(.has-progress) {
+  stroke: transparent;
+}
+
+/* ---- RECENT (per-card) ---- */
+
+.book-card-recent {
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.5rem 1.25rem 0.75rem;
+}
+
+.book-card-recent li + li {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.book-card-recent-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  text-decoration: none;
+  color: #b5b0a8;
+  font-size: 0.78rem;
+  transition: color 0.15s;
+}
+
+.book-card-recent-link:hover {
+  color: #f0ece8;
+}
+
+.book-card-recent-chapter {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a857e;
+  flex-shrink: 0;
+}
+
+.book-card-recent-title {
+  font-style: italic;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-card-recent-date {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: #8a857e;
+  flex-shrink: 0;
+}
+
+
+/* ---- RESPONSIVE ---- */
+
+@media (max-width: 680px) {
+  .library {
+    padding: 3rem 1.25rem;
+  }
+
+  .library-header {
+    margin-bottom: 3rem;
+  }
+
+  .book-grid {
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .book-card-recent {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .library {
+    padding: 2rem 1rem;
+  }
+
+  .book-card {
+    padding: 1.5rem 1rem;
+  }
+}

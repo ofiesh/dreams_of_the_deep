@@ -38,7 +38,7 @@ img {
   left: 0;
   height: 3px;
   width: 0;
-  background-color: #a39890;
+  background-color: var(--book-accent, #a39890);
   z-index: 100;
   transition: width 0.15s ease-out;
 }
@@ -98,21 +98,13 @@ html.theme-dark body {
 
 html.theme-sepia .progress-bar,
 html.theme-dark .progress-bar {
-  background-color: var(--progress);
+  background-color: var(--book-accent, var(--progress));
 }
 
 html.theme-sepia .page-indicator,
 html.theme-dark .page-indicator {
   color: var(--fg-muted);
   background: var(--bg);
-}
-
-html.theme-sepia .page-indicator::before {
-  background: linear-gradient(to top, var(--bg), transparent);
-}
-
-html.theme-dark .page-indicator::before {
-  background: linear-gradient(to top, var(--bg), transparent);
 }
 
 html.theme-sepia .chapter-header,

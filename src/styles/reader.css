@@ -152,11 +152,11 @@
 
 .toc-progress-fill {
   height: 100%;
-  background: #a39890;
+  background: var(--book-accent, #a39890);
 }
 
 .toc-progress.complete .toc-progress-fill {
-  background: #8a817a;
+  background: var(--book-accent, #8a817a);
 }
 
 .toc-home {
@@ -428,14 +428,7 @@ html.theme-dark .indicator-sep {
 }
 
 .page-indicator::before {
-  content: '';
-  position: absolute;
-  top: -24px;
-  left: -24px;
-  right: -24px;
-  height: 24px;
-  background: linear-gradient(to top, #f8f5f0, transparent);
-  pointer-events: none;
+  content: none;
 }
 
 /* Page turn buttons */
@@ -727,6 +720,26 @@ html.theme-dark .preview-banner {
   color: #fbbf24;
   background: #3a2a0a;
   border-color: #92400e;
+}
+
+.toc-version-badge {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: #4a6fa5;
+  background: #e8f0fe;
+  border: 1px solid #93b4e0;
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+html.theme-dark .toc-version-badge {
+  color: #7cacf0;
+  background: #1a2a40;
+  border-color: #2e4a6e;
 }
 
 .toc-draft-badge {

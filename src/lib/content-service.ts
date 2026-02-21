@@ -1,12 +1,25 @@
 import { z } from 'zod';
 import { renderMarkdown } from './render-markdown';
 
+// Book metadata schema
+const bookMetaSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  description: z.string(),
+  coverImage: z.string(),
+  accentColor: z.string(),
+  status: z.enum(['active', 'coming-soon']),
+  sortOrder: z.number(),
+});
+
+export type BookMeta = z.infer<typeof bookMetaSchema> & { slug: string };
+
 // Same schema as the old content.config.ts
 const chapterSchema = z.object({
   title: z.string(),
   chapter: z.number(),
   pov: z.string().optional(),
-  book: z.string(),
+  book: z.string().optional(),
   status: z.enum(['draft', 'published']),
   publishDate: z.coerce.date().optional(),
   summary: z.string().optional(),
@@ -24,6 +37,7 @@ export interface ChapterEntry {
 // In-memory cache: key → { entry, timestamp }
 const cache = new Map<string, { entry: ChapterEntry; ts: number }>();
 const listCache = new Map<string, { entries: ChapterEntry[]; ts: number }>();
+const bookMetaCache = new Map<string, { meta: BookMeta; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function isFresh(ts: number): boolean {
@@ -187,10 +201,15 @@ export async function listChapters(bookSlug: string): Promise<ChapterEntry[]> {
     keys.map(async (key) => {
       const raw = await provider.readFile(key);
       if (!raw) return null;
-      const entry = await parseChapter(key, raw);
-      // Also populate per-chapter cache
-      cache.set(`${bookSlug}/${entry.slug}`, { entry, ts: Date.now() });
-      return entry;
+      try {
+        const entry = await parseChapter(key, raw);
+        // Also populate per-chapter cache
+        cache.set(`${bookSlug}/${entry.slug}`, { entry, ts: Date.now() });
+        return entry;
+      } catch (err) {
+        console.warn(`[content] Skipping ${key}: ${err instanceof Error ? err.message : err}`);
+        return null;
+      }
     })
   );
 
@@ -208,4 +227,75 @@ export async function getPublishedChapters(bookSlug: string): Promise<ChapterEnt
 
 export async function getAllChapters(bookSlug: string): Promise<ChapterEntry[]> {
   return listChapters(bookSlug);
+}
+
+// --- Book metadata API ---
+
+export async function getBookMeta(bookSlug: string): Promise<BookMeta | null> {
+  const cached = bookMetaCache.get(bookSlug);
+  if (cached && isFresh(cached.ts)) return cached.meta;
+
+  const provider = getProvider();
+  const raw = await provider.readFile(`${bookSlug}/book.json`);
+  if (!raw) return null;
+
+  try {
+    const parsed = bookMetaSchema.parse(JSON.parse(raw));
+    const meta: BookMeta = { ...parsed, slug: bookSlug };
+    bookMetaCache.set(bookSlug, { meta, ts: Date.now() });
+    return meta;
+  } catch {
+    return null;
+  }
+}
+
+export async function listBooks(): Promise<BookMeta[]> {
+  const provider = getProvider();
+  const raw = await provider.readFile('books.json');
+  if (!raw) return [];
+
+  let slugs: string[];
+  try {
+    slugs = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+
+  const books = await Promise.all(slugs.map((slug) => getBookMeta(slug)));
+  return books
+    .filter((b): b is BookMeta => b !== null)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export interface RecentChapter {
+  slug: string;
+  title: string;
+  chapter: number;
+  publishDate: Date;
+  bookSlug: string;
+  bookTitle: string;
+}
+
+export async function getRecentChapters(limit = 5): Promise<RecentChapter[]> {
+  const books = await listBooks();
+  const allChapters: RecentChapter[] = [];
+
+  for (const book of books) {
+    const chapters = await getPublishedChapters(book.slug);
+    for (const ch of chapters) {
+      if (ch.data.publishDate) {
+        allChapters.push({
+          slug: ch.slug,
+          title: ch.data.title,
+          chapter: ch.data.chapter,
+          publishDate: ch.data.publishDate,
+          bookSlug: book.slug,
+          bookTitle: book.title,
+        });
+      }
+    }
+  }
+
+  allChapters.sort((a, b) => b.publishDate.getTime() - a.publishDate.getTime());
+  return allChapters.slice(0, limit);
 }
